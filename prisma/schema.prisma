@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id Int @id @default(autoincrement())
+  nombre String
+  email String @unique
+  password String
+  prestamos Prestamo[]
+}
+
+model Prestamo {
+  id Int @id @default(autoincrement())
+  monto Decimal
+  interes Float
+  cantidadCuotas Int
+  frecuenciaPago String
+  fechaInicio DateTime
+  fechaFin DateTime
+  usuarioId Int
+  usuario Usuario @relation(references: [id], fields: [usuarioId])
+  cuotas Cuota[]
+}
+
+model Cuota {
+  id Int @id @default(autoincrement())
+  monto Decimal
+  montoPagado Decimal
+  montoPendiente Decimal
+  estado String
+  prestamoId Int
+  prestamo Prestamo @relation(references: [id], fields: [prestamoId])
+  pagos Pago[]
+}
+
+model Pago {
+  id Int @id @default(autoincrement())
+  monto Decimal
+  fecha DateTime
+  cuotaId Int
+  cuota Cuota @relation(references: [id], fields: [cuotaId])
+}
