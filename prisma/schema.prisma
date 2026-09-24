@@ -16,6 +16,7 @@ model Usuario {
   nombre    String
   email     String     @unique
   password  String
+  rol Rol @default(USUARIO)
   prestamos Prestamo[]
 }
 
@@ -78,4 +79,9 @@ enum EstadoCuota {
   PENDIENTE
   PAGADA
   VENCIDA
+}
+
+enum Rol {
+  ADMIN
+  USUARIO
 }
