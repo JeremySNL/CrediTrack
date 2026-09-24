@@ -12,41 +12,56 @@ datasource db {
 }
 
 model Usuario {
-  id Int @id @default(autoincrement())
-  nombre String
-  email String @unique
-  password String
+  id        Int        @id @default(autoincrement())
+  nombre    String
+  email     String     @unique
+  password  String
+  prestamos Prestamo[]
+}
+
+model Cliente {
+  id        Int        @id @default(autoincrement())
+  nombre    String
+  cedula    String
+  telefono  String
+  direccion String
   prestamos Prestamo[]
 }
 
 model Prestamo {
-  id Int @id @default(autoincrement())
-  monto Decimal
-  interes Float
+  id             Int      @id @default(autoincrement())
+  monto          Decimal
+  interes        Float
   cantidadCuotas Int
   frecuenciaPago String
-  fechaInicio DateTime
-  fechaFin DateTime
+  fechaInicio    DateTime
+  fechaFin       DateTime
+  cuotas         Cuota[]
+
   usuarioId Int
-  usuario Usuario @relation(references: [id], fields: [usuarioId])
-  cuotas Cuota[]
+  usuario   Usuario @relation(references: [id], fields: [usuarioId])
+
+  clienteId Int
+  cliente   Cliente @relation(references: [id], fields: [clienteId])
 }
 
 model Cuota {
-  id Int @id @default(autoincrement())
-  monto Decimal
-  montoPagado Decimal
+  id             Int     @id @default(autoincrement())
+  monto          Decimal
+  montoPagado    Decimal
   montoPendiente Decimal
-  estado String
+  estado         String
+  pagos          Pago[]
+
   prestamoId Int
-  prestamo Prestamo @relation(references: [id], fields: [prestamoId])
-  pagos Pago[]
+  prestamo   Prestamo @relation(references: [id], fields: [prestamoId])
 }
 
 model Pago {
-  id Int @id @default(autoincrement())
+  id    Int      @id @default(autoincrement())
   monto Decimal
   fecha DateTime
+
   cuotaId Int
-  cuota Cuota @relation(references: [id], fields: [cuotaId])
+  cuota   Cuota @relation(references: [id], fields: [cuotaId])
 }
