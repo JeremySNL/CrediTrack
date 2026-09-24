@@ -1,10 +1,32 @@
 import prisma from "../db.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import { Rol } from "@prisma/client";
 
 export const registrar = async (req, res) => {
   try {
     const { nombre, email, password, rol } = req.body;
+
+    if (!nombre) {
+      return res.status(400).json({
+        error: "Nombre requerido",
+      });
+    }
+    if (!email) {
+      return res.status(400).json({
+        error: "Email requerido",
+      });
+    }
+    if (!password) {
+      return res.status(400).json({
+        error: "Password requerido",
+      });
+    }
+    if (rol && !Object.values(Rol).includes(rol)) {
+      return res.status(400).json({
+        error: "Rol invalido",
+      });
+    }
 
     const existe = await prisma.usuario.findUnique({
       where: { email },
@@ -23,7 +45,7 @@ export const registrar = async (req, res) => {
         nombre,
         email,
         password: hash,
-        rol: rol || "usuario",
+        rol,
       },
     });
 
@@ -34,13 +56,25 @@ export const registrar = async (req, res) => {
       rol: usuario.rol,
     });
   } catch (error) {
-    res.status(500).json({ error: "Error interno" });
+    res.status(500).json({ error: "Error al registrar un usuario" });
+    console.log("Error al registrar un usuario:\n", error);
   }
 };
 
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        error: "Email requerido",
+      });
+    }
+    if (!password) {
+      return res.status(400).json({
+        error: "Password requerido",
+      });
+    }
 
     const usuario = await prisma.usuario.findUnique({
       where: { email },
