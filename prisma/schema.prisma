@@ -37,6 +37,7 @@ model Prestamo {
   fechaInicio    DateTime
   fechaFin       DateTime
   cuotas         Cuota[]
+  estado EstadoPrestamo @default(ACTIVO)
 
   usuarioId Int
   usuario   Usuario @relation(references: [id], fields: [usuarioId])
@@ -50,7 +51,7 @@ model Cuota {
   monto          Decimal
   montoPagado    Decimal
   montoPendiente Decimal
-  estado         String
+  estado         EstadoCuota @default(PENDIENTE)
   pagos          Pago[]
 
   prestamoId Int
@@ -64,4 +65,17 @@ model Pago {
 
   cuotaId Int
   cuota   Cuota @relation(references: [id], fields: [cuotaId])
+}
+
+enum EstadoPrestamo {
+  ACTIVO
+  COMPLETADO
+  VENCIDO
+  CANCELADO
+}
+
+enum EstadoCuota {
+  PENDIENTE
+  PAGADA
+  VENCIDA
 }
