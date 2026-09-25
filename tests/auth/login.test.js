@@ -32,10 +32,7 @@ describe("POST /auth/login", () => {
     expect(res.body).toHaveProperty("token");
     expect(typeof res.body.token).toBe("string");
 
-    const decoded = jwt.verify(
-      res.body.token,
-      process.env.JWT_SECRET
-    );
+    const decoded = jwt.verify(res.body.token, process.env.JWT_SECRET);
 
     expect(decoded).toMatchObject({
       id: usuario.id,
