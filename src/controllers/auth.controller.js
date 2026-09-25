@@ -106,6 +106,29 @@ export const login = async (req, res) => {
 
     res.json({ token });
   } catch (error) {
-    res.status(500).json({ error: "Error interno" });
+    res.status(500).json({ error: "Error al logear un usuario" });
+    console.log("Error al logear un usuario:\n", error);
+  }
+};
+
+export const getMe = async (req, res) => {
+  const authHeader = req.headers["authorization"];
+
+  if (!authHeader) {
+    return res.status(401).json({
+      error: "Token requerido",
+    });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    res.json(jwt.verify(token, process.env.JWT_SECRET));
+
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      error: "Token inválido o expirado",
+    });
   }
 };
