@@ -1,0 +1,172 @@
+import "dotenv/config.js";
+import request from "supertest";
+import app from "../../src/app.js";
+import jwt from "jsonwebtoken";
+import prisma from "../../src/db.js";
+
+let usuario;
+let cliente;
+let prestamo;
+
+const token = jwt.sign(
+  {
+    id: 1,
+    email: "test@test.com",
+    rol: "USUARIO",
+  },
+  process.env.JWT_SECRET,
+  { expiresIn: "24h" },
+);
+
+describe("PUT /prestamos/:id", () => {
+  beforeAll(async () => {
+    usuario = await prisma.usuario.create({
+      data: {
+        nombre: "Usuario Test",
+        email: "test-prestamos@test.com",
+        password: "123456",
+        rol: "USUARIO",
+      },
+    });
+
+    cliente = await prisma.cliente.create({
+      data: {
+        nombre: "Cliente Test",
+        cedula: "40228583528",
+        telefono: "8093930000",
+        direccion: "Direccion Test",
+      },
+    });
+
+    prestamo = await prisma.prestamo.create({
+      data: {
+        monto: 10000,
+        interes: 5,
+        cantidadCuotas: 12,
+        frecuenciaPago: "MENSUAL",
+        fechaInicio: new Date("2026-09-01"),
+        fechaFin: new Date("2027-09-01"),
+        usuarioId: usuario.id,
+        clienteId: cliente.id,
+      },
+    });
+  });
+
+  it("deberia actualizar el prestamo correctamente", async () => {
+    const res = await request(app)
+      .put(`/prestamos/${prestamo.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        monto: 12000,
+        interes: 6,
+        cantidadCuotas: 12,
+        frecuenciaPago: "MENSUAL",
+        fechaInicio: "2026-09-01",
+        fechaFin: "2027-09-01",
+        usuarioId: usuario.id,
+        clienteId: cliente.id,
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      id: prestamo.id,
+    });
+  });
+
+  it("deberia rechazar un prestamo inexistente", async () => {
+    const res = await request(app)
+      .put("/prestamos/999999")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        monto: 12000,
+        usuarioId: usuario.id,
+        clienteId: cliente.id,
+      });
+
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty("error");
+  });
+
+  it("deberia rechazar peticion con id negativo o cero", async () => {
+    const res = await request(app)
+      .put("/prestamos/-1")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        monto: 12000,
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty("error");
+  });
+
+  it("deberia rechazar peticion con id no numerico", async () => {
+    const res = await request(app)
+      .put("/prestamos/asdasdad")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        monto: 12000,
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty("error");
+  });
+
+  it("deberia rechazar peticion con datos invalidos", async () => {
+    const res = await request(app)
+      .put(`/prestamos/${prestamo.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        monto: "monto-invalido",
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty("error");
+  });
+
+  it("deberia rechazar peticion sin token", async () => {
+    const res = await request(app)
+      .put(`/prestamos/${prestamo.id}`)
+      .send({
+        monto: 12000,
+      });
+
+    expect(res.status).toBe(401);
+    expect(res.body).toHaveProperty("error");
+  });
+
+  it("deberia rechazar peticion con token invalido", async () => {
+    const res = await request(app)
+      .put(`/prestamos/${prestamo.id}`)
+      .set("Authorization", `Bearer token`)
+      .send({
+        monto: 12000,
+      });
+
+    expect(res.status).toBe(401);
+    expect(res.body).toHaveProperty("error");
+  });
+
+  afterAll(async () => {
+    if (prestamo) {
+      await prisma.prestamo.delete({
+        where: {
+          id: prestamo.id,
+        },
+      });
+    }
+    if (cliente) {
+      await prisma.cliente.delete({
+        where: {
+          id: cliente.id,
+        },
+      });
+    }
+    if (usuario) {
+      await prisma.usuario.delete({
+        where: {
+          id: usuario.id,
+        },
+      });
+    }
+  });
+});
